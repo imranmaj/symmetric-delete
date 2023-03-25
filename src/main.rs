@@ -20,47 +20,45 @@ fn main() -> Result<()> {
     // maps deletions to the minimum distance to a dictionary word
     let mut min_distance_to_correct = HashMap::new();
 
-    for (i, line_result) in words_reader.lines().enumerate() {
-        let line = line_result.context("could not read line from file")?;
-        let word = line.trim().to_owned();
-        if word.is_empty() {
-            continue;
-        }
+    // get words: trim whitespace, remove empty lines
+    let words = words_reader
+        .lines()
+        .map(|line_result| line_result.map(|line| line.trim().to_owned()))
+        .filter(|line_result| line_result.as_ref().map_or(true, |line| !line.is_empty()))
+        .collect::<Result<Vec<_>, _>>()
+        .context("could not read from file")?;
 
-        if i % UPDATE_INTERVAL == 0 {
-            println!("Processing word {i}: {word}");
-        }
-
-        // insert dictionary words with distance 0
-        corrections
-            .entry(word.clone())
-            .and_modify(|v: &mut Vec<String>| v.clear())
-            .or_insert_with(|| Vec::with_capacity(1))
-            .push(word.clone());
+    // dictionary words have distance 0; they are corrected to themself
+    for word in &words {
+        corrections.insert(word.clone(), vec![word.clone()]);
         min_distance_to_correct.insert(word.clone(), 0);
+    }
 
-        // edit distance should not be more than number of letters in word
-        for distance in 1..=MAX_EDIT_DISTANCE.min(word.len() - 1) {
-            for subsequence in subsequences_from_n_deletions(&word, distance) {
-                // update min distance to a correct spelling for this subsequence
+    for distance in 1..=MAX_EDIT_DISTANCE {
+        println!("\nCalculating subsequences with distance {distance}");
+        for (i, word) in words.iter().enumerate() {
+            if i % UPDATE_INTERVAL == 0 {
+                println!("Processing word {i}: {word}");
+            }
+
+            // creating subsequences from this word at this distance will yield empty strings
+            if word.len() - distance <= 0 {
+                continue;
+            }
+
+            for subsequence in subsequences_from_n_deletions(word, distance) {
+                // set distance from generated subsequence to the word the subsequence came from;
+                // if there is already an entry then the existing entry is closer
+                // because we are processing distances only in increasing order
                 let existing_distance = min_distance_to_correct
                     .entry(subsequence.clone())
                     .or_insert(distance);
 
-                // if this subsequence is now the closest distance to a correct spelling
-                // then update the existing distance and clear the existing correct spellings
-                if distance < *existing_distance {
-                    *existing_distance = distance;
+                // if the current distance is the closest we have then this word is the closest
+                // correct spelling for this subsequence
+                if distance == *existing_distance {
                     corrections
                         .entry(subsequence.clone())
-                        .and_modify(|v| v.clear());
-                }
-
-                // if this subsequence has the minimum distance then add this correct spelling
-                // to the corrections for this subsequence
-                if min_distance_to_correct[&subsequence] == distance {
-                    corrections
-                        .entry(subsequence)
                         .or_insert_with(|| Vec::with_capacity(1))
                         .push(word.clone());
                 }
