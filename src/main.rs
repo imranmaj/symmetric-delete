@@ -30,6 +30,16 @@ fn main() -> Result<()> {
 
     let processing_start = Instant::now();
 
+    // preprocess dictionary words by calculating their subsequences and storing the
+    // subsequences along with distances to the original word
+    // 
+    // we want to keep all subsequences and not just the closest ones because otherwise
+    // we might miss valid corrections
+    // eg, consider input "tubr", dictionary has "tube" and "tub"
+    // tub -> tube = 1
+    // tub -> tub = 0 (tub is already a valid word)
+    // if we only kept the subsequences closest to correct words then we would only keep tub
+    // and miss tube as a correction for tubr
     for distance in 0..=MAX_EDIT_DISTANCE {
         println!("\nCalculating subsequences with distance {distance}");
         for (i, word) in words.iter().enumerate() {
@@ -43,8 +53,6 @@ fn main() -> Result<()> {
             }
 
             for subsequence in subsequences_from_n_deletions(word, distance) {
-                // if the current distance is the closest we have then this word is the closest
-                // correct spelling for this subsequence
                 corrections
                     .entry(subsequence.clone())
                     .or_insert_with(|| HashMap::with_capacity(1))
