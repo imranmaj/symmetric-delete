@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     collections::{HashMap, HashSet},
     fs::File,
     io::{self, BufRead, BufReader, Write},
@@ -96,8 +97,20 @@ fn main() -> Result<()> {
             }
         }
         if let Some(min_distance) = results.keys().min() {
+            // sort by length then alphabetically
+            let mut correct_spellings: Vec<&String> = results
+                .get(min_distance)
+                .unwrap()
+                .into_iter()
+                .map(|x| *x)
+                .collect();
+            correct_spellings.sort_by(|a, b| match a.len().cmp(&b.len()) {
+                x @ (Ordering::Less | Ordering::Greater) => x,
+                std::cmp::Ordering::Equal => a.cmp(b),
+            });
+
             println!("\nFound correct spellings with distance {min_distance}:");
-            for correct_spelling in &results[min_distance] {
+            for correct_spelling in correct_spellings {
                 println!("{correct_spelling}");
             }
         } else {
