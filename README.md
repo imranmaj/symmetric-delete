@@ -34,7 +34,7 @@ dictionary: ["tub", "tube", "tubes", "tuber"]
 
 We can see how "tubr" might be transformed into the various words in the dictionary. If we delete the "r", we get "tub"; if we replace the "r" with an "e" we get "tube"; if we insert an "e" we get "tuber".
 
-Symmetric Delete can detect that "tubr" is close to these dictionary words by calculating all combinations of deletions of characters from "tubr" as well as all words in the dictionary. If we find a subsequence of characters from the original input that matches a subsequence of letters from a word in the dictionary, then we know that the input is close to a dictionary word. In this case, deleting the "r" will give us "tub". "tub" is 0 deletions away from the dictionary word "tub", 1 deletion away from "tube" (deleting the "e"), and 2 deletions away from both "tubes" and "tuber" (deleting the last 2 lettes in both words).
+Symmetric Delete can detect that "tubr" is close to these dictionary words by calculating all combinations of deletions of characters from "tubr" as well as all combinations of deletions from words in the dictionary. If we find a subsequence of characters from the original input that matches a subsequence of letters from a word in the dictionary, then we know that the input is close to a dictionary word. In this case, deleting the "r" will give us "tub". "tub" is 0 deletions away from the dictionary word "tub", 1 deletion away from "tube" (deleting the "e"), and 2 deletions away from both "tubes" and "tuber" (deleting the last 2 lettes in both words).
 
 ## Further reading
 
