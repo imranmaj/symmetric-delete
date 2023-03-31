@@ -83,25 +83,17 @@ fn main() -> Result<()> {
                 continue;
             }
 
-            // find subsequences of input, and check those against the subsequences in corrections map
-            for subsequence in subsequences_from_n_deletions(&input_word, dist_input_to_subseq) {
-                if let Some(subseq_dist_to_correct_spelling) = corrections.get(&subsequence) {
-                    for (dist_subseq_to_correction, correct_spellings) in
-                        subseq_dist_to_correct_spelling
-                    {
-                        results
-                            // we use the max of distance from input to subsequence and distance from subsequence to correct spelling
-                            // so that we don't favor the subsequence when it is itself a correct spelling
-                            // eg, consider input "tubr", dictionary has "tube" and "tub"
-                            // tubr -> tub = 1
-                            // tub -> tube = 1
-                            // since we're using the max, tubr is 1 away from both tube and tub, but if we were using a sum of distances,
-                            // for example, tub would be 1 away while tube would be 1 + 1 = 2 away
-                            .entry(dist_input_to_subseq.max(*dist_subseq_to_correction))
-                            .or_insert_with(|| HashSet::with_capacity(1))
-                            .extend(correct_spellings);
-                    }
-                }
+            // find subsequences of input, and update results with dictionary words that share a subsequence
+            // with the input subsequence
+            for input_subsequence in
+                subsequences_from_n_deletions(&input_word, dist_input_to_subseq)
+            {
+                check_for_correct_spellings(
+                    &mut results,
+                    &corrections,
+                    input_subsequence,
+                    dist_input_to_subseq,
+                );
             }
         }
         if let Some(min_distance) = results.keys().min() {
@@ -109,8 +101,8 @@ fn main() -> Result<()> {
             let mut correct_spellings: Vec<&String> =
                 results.get(min_distance).unwrap().iter().copied().collect();
             correct_spellings.sort_by(|a, b| match a.len().cmp(&b.len()) {
-                x @ (Ordering::Less | Ordering::Greater) => x,
-                std::cmp::Ordering::Equal => a.cmp(b),
+                Ordering::Equal => a.cmp(b),
+                x => x,
             });
 
             println!("\nFound correct spellings with distance {min_distance}:");
@@ -119,6 +111,33 @@ fn main() -> Result<()> {
             }
         } else {
             println!("Did not find any corrections for that word");
+        }
+    }
+}
+
+/// Updates the map "results" from (distance from input word to possible correct spellings) to correct spellings
+/// by checking if the input_subsequence (a subsequence of the input word) is also a subsequence of any dictionary words.
+/// If it is, then those dictionary words are stored in results with the key being
+/// max(dist_input_to_subseq: distance from the input word to input_subsequence, distance from input_subsequence to correct spellings)
+fn check_for_correct_spellings<'a>(
+    results: &mut HashMap<usize, HashSet<&'a String>>,
+    corrections: &'a HashMap<String, HashMap<usize, Vec<String>>>,
+    input_subsequence: String,
+    dist_input_to_subseq: usize,
+) {
+    if let Some(subseq_dist_to_correct_spelling) = corrections.get(&input_subsequence) {
+        for (dist_subseq_to_correction, correct_spellings) in subseq_dist_to_correct_spelling {
+            results
+                // we use the max of distance from input to subsequence and distance from subsequence to correct spelling
+                // so that we don't favor the subsequence when it is itself a correct spelling
+                // eg, consider input "tubr", dictionary has "tube" and "tub"
+                // tubr -> tub = 1
+                // tub -> tube = 1
+                // since we're using the max, tubr is 1 away from both tube and tub, but if we were using a sum of distances,
+                // for example, tub would be 1 away while tube would be 1 + 1 = 2 away
+                .entry(dist_input_to_subseq.max(*dist_subseq_to_correction))
+                .or_insert_with(|| HashSet::with_capacity(1))
+                .extend(correct_spellings);
         }
     }
 }
