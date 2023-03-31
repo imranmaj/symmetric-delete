@@ -23,7 +23,7 @@ fn main() -> Result<()> {
     // get words: trim whitespace, lowercase, remove empty lines
     let words = words_reader
         .lines()
-        .map(|line_result| line_result.map(|line| line.trim().to_lowercase().to_owned()))
+        .map(|line_result| line_result.map(|line| line.trim().to_lowercase()))
         .filter(|line_result| line_result.as_ref().map_or(true, |line| !line.is_empty()))
         .collect::<Result<Vec<_>, _>>()
         .context("could not read from file")?;
@@ -32,7 +32,7 @@ fn main() -> Result<()> {
 
     // preprocess dictionary words by calculating their subsequences and storing the
     // subsequences along with distances to the original word
-    // 
+    //
     // we want to keep all subsequences and not just the closest ones because otherwise
     // we might miss valid corrections
     // eg, consider input "tubr", dictionary has "tube" and "tub"
@@ -48,7 +48,7 @@ fn main() -> Result<()> {
             }
 
             // creating subsequences from this word at this distance will yield empty strings
-            if word.len() - distance <= 0 {
+            if word.len() as i32 - distance as i32 <= 0 {
                 continue;
             }
 
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
         }
     }
 
-    let processing_time_seconds = (Instant::now() - processing_start).as_millis() as f64 / 1000_f64;
+    let processing_time_seconds = processing_start.elapsed().as_millis() as f64 / 1000_f64;
     println!("\nFinished processing dictionary in {processing_time_seconds:.3}s");
 
     loop {
@@ -73,13 +73,13 @@ fn main() -> Result<()> {
         io::stdin()
             .read_line(&mut input_word)
             .context("could not read from stdin")?;
-        let input_word = input_word.trim().to_lowercase().to_owned();
+        let input_word = input_word.trim().to_lowercase().clone();
 
         // maps distances from input word to correct spellings
         let mut results = HashMap::new();
         for dist_input_to_subseq in 0..=MAX_EDIT_DISTANCE {
             // creating subsequences from this word at this distance will yield empty strings
-            if input_word.len() - dist_input_to_subseq <= 0 {
+            if input_word.len() as i32 - dist_input_to_subseq as i32 <= 0 {
                 continue;
             }
 
@@ -106,12 +106,8 @@ fn main() -> Result<()> {
         }
         if let Some(min_distance) = results.keys().min() {
             // sort by length then alphabetically
-            let mut correct_spellings: Vec<&String> = results
-                .get(min_distance)
-                .unwrap()
-                .into_iter()
-                .map(|x| *x)
-                .collect();
+            let mut correct_spellings: Vec<&String> =
+                results.get(min_distance).unwrap().iter().copied().collect();
             correct_spellings.sort_by(|a, b| match a.len().cmp(&b.len()) {
                 x @ (Ordering::Less | Ordering::Greater) => x,
                 std::cmp::Ordering::Equal => a.cmp(b),
@@ -122,7 +118,7 @@ fn main() -> Result<()> {
                 println!("{correct_spelling}");
             }
         } else {
-            println!("Did not find any corrections for that word")
+            println!("Did not find any corrections for that word");
         }
     }
 }
@@ -146,5 +142,5 @@ fn subsequences_from_n_deletions(s: &str, n: usize) -> Vec<String> {
         subsequences.push(new_word);
     }
 
-    return subsequences;
+    subsequences
 }
