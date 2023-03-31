@@ -75,7 +75,7 @@ fn main() -> Result<()> {
             .context("could not read from stdin")?;
         let input_word = input_word.trim().to_lowercase().clone();
 
-        // maps distances from input word to correct spellings
+        // maps (distances from input word to correct spellings) to correct spellings
         let mut results = HashMap::new();
         for dist_input_to_subseq in 0..=MAX_EDIT_DISTANCE {
             // creating subsequences from this word at this distance will yield empty strings
