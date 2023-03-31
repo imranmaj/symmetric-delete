@@ -17,8 +17,8 @@ fn main() -> Result<()> {
     let words_file = File::open(WORDS_FILE).context("could not open words file")?;
     let words_reader = BufReader::new(words_file);
 
-    // maps deletions to (a map of distances to correct spellings in the dictionary)
-    let mut corrections = HashMap::new();
+    // maps subsequences to (a map of distances to correct spellings in the dictionary)
+    let mut dictionary_subsequences = HashMap::new();
 
     // get words: trim whitespace, lowercase, remove empty lines
     let words = words_reader
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
             }
 
             for subsequence in subsequences_from_n_deletions(word, distance) {
-                corrections
+                dictionary_subsequences
                     .entry(subsequence.clone())
                     .or_insert_with(|| HashMap::with_capacity(1))
                     .entry(distance)
@@ -90,8 +90,8 @@ fn main() -> Result<()> {
             {
                 check_for_correct_spellings(
                     &mut results,
-                    &corrections,
-                    input_subsequence,
+                    &dictionary_subsequences,
+                    &input_subsequence,
                     dist_input_to_subseq,
                 );
             }
@@ -115,17 +115,17 @@ fn main() -> Result<()> {
     }
 }
 
-/// Updates the map "results" from (distance from input word to possible correct spellings) to correct spellings
-/// by checking if the input_subsequence (a subsequence of the input word) is also a subsequence of any dictionary words.
+/// Updates the map `results` from (distance from input word to possible correct spellings) to correct spellings
+/// by checking if the `input_subsequence` (a subsequence of the input word) is also a subsequence of any dictionary words.
 /// If it is, then those dictionary words are stored in results with the key being
-/// max(dist_input_to_subseq: distance from the input word to input_subsequence, distance from input_subsequence to correct spellings)
+/// max(`dist_input_to_subseq`: distance from the input word to `input_subsequence`, distance from `input_subsequence` to correct spellings)
 fn check_for_correct_spellings<'a>(
     results: &mut HashMap<usize, HashSet<&'a String>>,
-    corrections: &'a HashMap<String, HashMap<usize, Vec<String>>>,
-    input_subsequence: String,
+    dictionary_subsequences: &'a HashMap<String, HashMap<usize, Vec<String>>>,
+    input_subsequence: &String,
     dist_input_to_subseq: usize,
 ) {
-    if let Some(subseq_dist_to_correct_spelling) = corrections.get(&input_subsequence) {
+    if let Some(subseq_dist_to_correct_spelling) = dictionary_subsequences.get(input_subsequence) {
         for (dist_subseq_to_correction, correct_spellings) in subseq_dist_to_correct_spelling {
             results
                 // we use the max of distance from input to subsequence and distance from subsequence to correct spelling
