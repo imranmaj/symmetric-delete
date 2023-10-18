@@ -9,7 +9,7 @@ use std::{
 use anyhow::{Context, Result};
 use itertools::Itertools;
 
-const WORDS_FILE: &str = "words.txt";
+const WORDS_FILE: &str = "clean_words_alpha_revb.txt";
 // we only consider subsequences that are at most MAX_EDIT_DISTANCE away from the input word
 // and at most MAX_EDIT_DISTANCE away from a correct spelling
 const MAX_EDIT_DISTANCE: usize = 2;
