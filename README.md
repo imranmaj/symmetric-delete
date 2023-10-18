@@ -29,12 +29,45 @@ Symmetric Delete sidesteps the issue of considering insertions, deletions, subst
 ```
 input: "tubr"
 
-dictionary: ["tub", "tube", "tubes", "tuber"]
+dictionary: ["tub", "tube", "tubes", "tuber", "tab"]
 ```
 
 We can see how "tubr" might be transformed into the various words in the dictionary. If we delete the "r", we get "tub"; if we replace the "r" with an "e" we get "tube"; if we insert an "e" we get "tuber".
 
-Symmetric Delete can detect that "tubr" is close to these dictionary words by calculating all combinations of deletions of characters from "tubr" as well as all combinations of deletions from words in the dictionary. If we find a subsequence of characters from the original input that matches a subsequence of letters from a word in the dictionary, then we know that the input is close to a dictionary word. In this case, deleting the "r" will give us "tub". "tub" is 0 deletions away from the dictionary word "tub", 1 deletion away from "tube" (deleting the "e"), and 2 deletions away from both "tubes" and "tuber" (deleting the last 2 lettes in both words).
+Symmetric Delete can detect that "tubr" is close to these dictionary words by calculating all combinations of deletions of characters from "tubr" as well as all combinations of deletions from words in the dictionary. If we find a subsequence of characters from the original input that matches a subsequence of letters from a word in the dictionary, then we know that the input is close to a dictionary word. In this case, deleting the "r" will give us "tub". "tub" is 0 deletions away from the dictionary word "tub", 1 deletion away from "tube" (deleting the "e"), and 2 deletions away from both "tubes" and "tuber" (deleting the last 2 letters in both words).
+
+```
+                ------------ tuber  ----------------------------
+               /      (distance 2 from tub,                     \
+              /       distance 1 from tubr)                      \
+             /                                                    \
+            /                                                     |
+           /                  tubes (distance 2 from tub)         |
+          /                           /                           /
+         /                           /                           /
+tubr (distance 1 from tub)        tube (distance 1 from tub)-----
+            \                             /
+             \                           /
+              ----------- tub -----------         tab
+                           \                      /
+                            \                    /
+                             -------- tb --------
+
+Map of {subsequences : {distances : correct spellings}}:
+
+{
+  "tub": {
+    0: ["tub"],
+    1: ["tube"],
+    2: ["tubes", "tuber"]
+  },
+  "tubr": {
+    1: ["tubr"]
+  }
+}
+```
+
+When "tubr" is entered as an incorrect spelling to be correct, we calculate all subsequences of "tubr" and we find "tub". From there, we check correct spellings which can be found from adding letters to "tub", and we find "tube", "tubes", and "tuber". Since "tub", "tube", and "tubr" are closest, we return those.
 
 ## Further reading
 
