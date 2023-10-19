@@ -62,7 +62,7 @@ Map of {subsequences : {distances : correct spellings}}:
     2: ["tubes", "tuber"]
   },
   "tubr": {
-    1: ["tubr"]
+    1: ["tuber"]
   }
 }
 ```
